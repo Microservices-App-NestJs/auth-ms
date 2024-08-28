@@ -16,3 +16,5 @@ steps:
         "push",
         "us-east1-docker.pkg.dev/microservices-ecommerce-433602/ecommerce-image-registry/auth-ms",
       ]
+options:
+  logging: CLOUD_LOGGING_ONLY
