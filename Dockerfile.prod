@@ -1,0 +1,41 @@
+#Dependencies
+FROM node:21-alpine3.19 as deps
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
+
+#Builder - Builds application
+FROM node:21-alpine3.19 as build
+WORKDIR /usr/src/app
+
+#Copy from deps, the node modules
+COPY --from=deps /usr/src/app/node_modules ./node_modules
+
+#Copy the entire source code application
+COPY . .
+
+RUN npx prisma generate
+
+RUN npm run build
+
+RUN npm ci -f --only=production && npm cache clean --force
+
+#Create final Docker image
+FROM node:21-alpine3.19 as prod
+
+WORKDIR /usr/src/app
+
+COPY --from=build /usr/src/app/node_modules ./node_modules
+
+COPY --from=build /usr/src/app/dist ./dist
+
+ENV NODE_ENV=production
+
+USER node
+
+EXPOSE 3000
+
+CMD [ "node", "dist/main.js" ]
